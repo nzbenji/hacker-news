@@ -20,12 +20,20 @@ const list = [
   },
 ]
 
+function isSearched(query){
+  return function(item) {
+    //When search query matches in list, item stays, when item doesnt match - item is removed.
+    return item.title.toLowerCase().includes(query.toLowerCase())
+  }
+}
+
 class App extends Component {
   constructor(props){
     super(props)
 
     this.state = {
-      list: list
+      list: list,
+      searchTerm: ''
     }
   }
 
@@ -35,8 +43,10 @@ class App extends Component {
     });
   }
 
-  onSearchChange = () => {
-    
+  onSearchChange = (event) => {
+    this.setState({
+      searchTerm: event.target.value
+    })
   }
 
   render() {
@@ -45,7 +55,7 @@ class App extends Component {
       <form>
         <input type="text" onChange={ this.onSearchChange }/>
       </form>
-        {this.state.list.map(item => {
+        {this.state.list.filter(isSearched(this.state.searchTerm)).map(item => {
           return (
             <div key={item.objectID}>
             <span>
