@@ -1,4 +1,5 @@
 import React from 'react';
+import '../css/Search.css';
 
 const Search = ({ value, onChange, children }) => {
   return (
