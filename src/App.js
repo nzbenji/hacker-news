@@ -3,25 +3,6 @@ import Search from "./components/Search.js";
 import Button from "./components/Button.js";
 import "./App.css";
 
-// const list = [
-//   {
-//     title: "React",
-//     author: "Bob nmu",
-//     url: "www.react.com",
-//     comments: 4,
-//     points: 3,
-//     objectID: 1
-//   },
-//   {
-//     title: "Vue",
-//     author: "Rob nmu",
-//     url: "www.vue.com",
-//     comments: 2,
-//     points: 5,
-//     objectID: 2
-//   }
-// ];
-
 function isSearched(query) {
   return function(item) {
     //When search query matches in list, item stays, when item doesnt match - item is removed.
@@ -32,9 +13,7 @@ function isSearched(query) {
 const searchQuery = 'react';
 
 const NEWS_PATH = 'https://hn.algolia.com/api/v1';
-// const NEWS_SEARCH = './search';
-// const PARAM_SEARCH = 'query='
-const NEWS_URL = `${NEWS_PATH}/search?query=`
+const NEWS_URL = `${NEWS_PATH}/search?query=`;
 
 class App extends Component {
   constructor(props) {
@@ -50,13 +29,13 @@ class App extends Component {
 
   topSearchStories = (result) => {
     this.setState({
-      result
+      result: result
     });
   }
 
   componentDidMount() {
     const { searchTerm } = this.state;
-    
+
     fetch(`${NEWS_URL}${searchTerm}`)
       .then( res => res.json())
       .then( data => this.topSearchStories(data) )
@@ -64,13 +43,18 @@ class App extends Component {
 
   }
 
-  onDismiss = id => {
+  handleRemoveItem = id => {
+    const updatedResults = this.state.result.hits.filter(item => {
+      return item.objectID !== id
+    })
+    //generate new object and updates the hits array with filtered
+    //out elements removed
     this.setState({
-      list: this.state.list.filter(item => item.objectID !== id)
+      result: { ...this.state.results, hits: updatedResults }
     });
   };
 
-  onSearchChange = event => {
+  handSearchChange = event => {
     this.setState({
       searchTerm: event.target.value
     });
@@ -79,6 +63,9 @@ class App extends Component {
   render() {
     console.log(this.state)
     const { searchTerm, result } = this.state;
+    //prevent from returning anything because result in state is set to null
+    //Once API data has suceeded results are saved to state and App 
+    //component will re render
     if(!result) return null
 
     return (
@@ -86,20 +73,20 @@ class App extends Component {
       <div className="interactions">
         <Search 
         value={searchTerm} 
-        onChange={this.onSearchChange} 
+        onChange={this.handSearchChange} 
         >Search</Search>
         </div>
         <Table 
         list={result.hits} 
         pattern={searchTerm} 
-        onDismiss={this.onDismiss} 
+        handleRemoveItem={this.handleRemoveItem} 
         />
       </div>
     );
   }
 }
 
-const Table = ({ list, pattern, onDismiss }) => {
+const Table = ({ list, pattern, handleRemoveItem }) => {
   return (
     <div className="table">
         { list.filter(isSearched(pattern)).map(item => (
@@ -111,7 +98,7 @@ const Table = ({ list, pattern, onDismiss }) => {
             <span style={{ width: '10%' }}>{item.comments}</span>
             <span style={{ width: '10%' }}>{item.points}</span>
             <span style={{ width: '10%' }}>
-              <Button onClick={ () => onDismiss(item.objectID) }
+              <Button onClick={ () => handleRemoveItem(item.objectID) }
               className="button__inline"
               >
                 Dismiss
