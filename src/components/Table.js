@@ -1,6 +1,5 @@
-import React, { Component } from "react";
+import React from "react";
 import Button from './Button.js';
-import App from '../App.js';
 
 const Table = ({ list, handleRemoveItem }) => {
     return (
