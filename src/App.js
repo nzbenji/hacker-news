@@ -21,23 +21,31 @@ class App extends Component {
     super(props);
 
     this.state = {
-      result: null,
+      results: null,
+      searchKey: '',
       searchTerm: searchQuery
     };
   }
 
   topSearchStories = result => {
     const { hits, page } = result;
+    const { searchKey, results } = this.state
+
     //add old search results + new results to page
-    const oldHits = page !== 0 ? this.state.result.hits : [];
+    const oldHits = results && results[searchKey] ? results[searchKey] : []; //retrieved from results map with searchKey as key
     const updateHits = [...oldHits, ...hits]
     this.setState({
-      result: { hits: updateHits, page }
+      //spread all other results by searchKey to save previous search results
+      results: { ...results, 
+        //store searchKey in the results map with hits and page properties
+        [searchKey]: { hits: updateHits, page } 
+      }
     });
   };
 
   componentDidMount() {
     const { searchTerm } = this.state;
+    this.setState({ searchKey : searchTerm})
     this.fetchSearchResult(searchTerm)
   }
 
@@ -49,13 +57,18 @@ class App extends Component {
   }
 
   handleRemoveItem = id => {
-    const updatedResults = this.state.result.hits.filter(item => {
+    const { searchKey, results } = this.state;
+    const { hits, page } = results[searchKey]
+
+    const updatedResults = hits.filter(item => {
       return item.objectID !== id;
     });
     //generate new object and updates the hits array with filtered
     //out elements removed
     this.setState({
-      result: { ...this.state.results, hits: updatedResults }
+      results: { ...results, 
+        [searchKey] : { hits: updatedResults, page }
+      }
     });
   };
 
@@ -67,19 +80,28 @@ class App extends Component {
 
   handleSearchSubmit = event => {
     const { searchTerm } = this.state;
-    this.fetchSearchResult(searchTerm)
+    this.setState({ searchKey: searchTerm})
+
+    if(this.requiredSearchRequest) {
+      this.fetchSearchResult(searchTerm)
+    }
     event.preventDefault();
+  }
+
+  requiredSearchRequest = searchTerm => {
+    return !this.state.results[searchTerm]
   }
 
 
   render() {
     console.log(this.state);
-    const { searchTerm, result } = this.state;
-    const page = (result && result.page) || 0
+    const { searchTerm, results, searchKey } = this.state;
+    const page = (results && results[searchKey] && results[searchKey].page) || 0
+    const list = (results && results[searchKey] && results[searchKey].hits) || []
     //prevent from returning anything because result in state is set to null
     //Once API data has suceeded results are saved to state and App
     //component will re render
-    if (!result) return null;
+    if (!results) return null;
 
     return (
       <div className="page">
@@ -93,11 +115,11 @@ class App extends Component {
           </Search>
         </div>
         <Table
-          list={result.hits}
+          list={list}
           handleRemoveItem={this.handleRemoveItem}
         />
         <div className="interactions">
-          <Button onClick={ () => this.fetchSearchResult(searchTerm, page+1)}>
+          <Button onClick={ () => this.fetchSearchResult(searchKey, page+1)}>
             More
           </Button>
         </div>
